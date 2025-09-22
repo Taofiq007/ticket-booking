@@ -2,41 +2,42 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
 
-class Todo(BaseModel):
-    id: int
-    name: str
-    description: str
-
-todos : List[Todo] = []
-
 api = FastAPI()
 
+class Ticket(BaseModel):
+    id: int
+    flight_name: str
+    flight_date: str  # Example: "2025-10-15"
+    flight_time: str  # Example: "14:30"
+    destination: str
+
+tickets: List[Ticket] = []
+
 @api.get("/")
-def home():
-    return {"message":"Hello World!"}
+def index():
+    return {"Message": "Welcome to the Ticket Booking System"}
 
-@api.get("/todos")
-def get_todo():
-    return todos
+@api.get("/ticket")
+def get_tickets():
+    return tickets
 
+@api.post("/ticket")
+def add_ticket(ticket: Ticket):
+    tickets.append(ticket)
+    return ticket
 
-@api.post("/todos")
-def create_todo(todo:Todo):
-    todos.append(todo)
-    return todos
+@api.put("/ticket/{ticket_id}")
+def update_ticket(ticket_id: int, updated_ticket: Ticket):
+    for index, ticket in enumerate(tickets):
+        if ticket.id == ticket_id:  # <-- fixed here (added colon)
+            tickets[index] = updated_ticket
+            return updated_ticket
+    return {"error": "Ticket Not Found"}
 
-@api.put("/todos/{todo_id}")
-def update_todo(todo_id: int, updated_todo:Todo):
-    for index, todo in enumerate(todos):
-        if todo.id==todo_id:
-            todos[index]=updated_todo
-            return todos[index]
-    return {"error":"error in updation"}
-
-@api.delete("/todos/{todo_id}")
-def delete_todo(todo_id: int):
-    for index, todo in enumerate(todos):
-        if todo.id==todo_id:
-            deleted_todo = todos.pop(index)
-            return deleted_todo
-    return {"error":"error in deletion"}
+@api.delete("/ticket/{ticket_id}")
+def delete_ticket(ticket_id: int):
+    for index, ticket in enumerate(tickets):
+        if ticket.id == ticket_id:
+            deleted_ticket = tickets.pop(index)
+            return deleted_ticket
+    return {"error": "Ticket not found, deletion failed"}

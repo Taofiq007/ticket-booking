@@ -1,52 +1,48 @@
 from fastapi.testclient import TestClient
-from src.main import api
+from src.main import api, tickets
 
 client = TestClient(api)
 
-
-# Test home endpoint
-def test_home():
+def test_index():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Hello World!"}
+    assert response.json() == {"Message": "Welcome to the Ticket Booking System"}
 
-
-# Test POST
-def test_create_todo():
-    response = client.post("/todos", json={
+def test_add_ticket():
+    new_ticket = {
         "id": 1,
-        "name": "Study",
-        "description": "Prepare for exams"
-    })
-    assert response.status_code == 200
-    assert response.json()[0]["name"] == "Study"
-
-
-# Test GET all
-def test_get_todos():
-    response = client.get("/todos")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
-    assert len(response.json()) > 0
-
-
-# Test PUT
-def test_update_todo():
-    response = client.put("/todos/1", json={
-        "id": 1,
-        "name": "Study Updated",
-        "description": "Prepare for math exams"
-    })
-    assert response.status_code == 200
-    assert response.json()["name"] == "Study Updated"
-
-
-# Test DELETE
-def test_delete_todo():
-    response = client.delete("/todos/1")
-    assert response.status_code == 200
-    assert response.json() == {
-        "id": 1,
-        "name": "Study Updated",
-        "description": "Prepare for math exams"
+        "flight_name": "Air Bangladesh",
+        "flight_date": "2025-10-15",
+        "flight_time": "14:30",
+        "destination": "Dhaka"
     }
+    response = client.post("/ticket", json=new_ticket)
+    assert response.status_code == 200
+    assert response.json() == new_ticket
+
+def test_get_tickets():
+    response = client.get("/ticket")
+    assert response.status_code == 200
+    assert len(response.json()) > 0  # at least 1 ticket added
+
+def test_update_ticket():
+    updated_ticket = {
+        "id": 1,
+        "flight_name": "Air Bangladesh",
+        "flight_date": "2025-10-16",
+        "flight_time": "16:00",
+        "destination": "Chittagong"
+    }
+    response = client.put("/ticket/1", json=updated_ticket)
+    assert response.status_code == 200
+    assert response.json()["destination"] == "Chittagong"
+
+def test_delete_ticket():
+    response = client.delete("/ticket/1")
+    assert response.status_code == 200
+    assert response.json()["id"] == 1
+
+    # Try deleting again → should fail
+    response = client.delete("/ticket/1")
+    assert response.status_code == 200
+    assert response.json()["error"] == "Ticket not found, deletion failed"
